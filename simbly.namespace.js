@@ -1,3 +1,9 @@
+/***************************************************
+    Author: Vijay S Nair
+	URI: thewebstalker.tumblr.com
+	Github: https://github.com/nairvijays/Simbly
+***************************************************/
+
 (function(daddy, undefined){
 
 	var NameSpace = {};
