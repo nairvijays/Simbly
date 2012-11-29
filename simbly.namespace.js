@@ -4,82 +4,161 @@
 	Github: https://github.com/nairvijays/Simbly
 ***************************************************/
 
-(function(daddy, undefined){
+/*jslint browser: true*/
 
-	var NameSpace = {};
-
-	// Create NameSpace
-	NameSpace.Create = function(nameSpace){
-		var returnList = [];
-		return (nameSpace === undefined) ? false :
-					(nameSpace instanceof Array) ? (function(){
-														for(var i in nameSpace) {
-															if(typeof(nameSpace[i]) != "string") continue;
-															create(nameSpace[i]);
-														}
-														return true;
-													}()) : create(nameSpace);
+(function (win, un) {
+    
+    "use strict";
+    
+    /*
+        @desc Declare a temp object and later assign it to window object
+    */
+    var NameSpace = {};
+    
+    /*
+        @desc Check whether the Namespace starts with "window"
+        @param array nsSplit - array of strings
+        @return number - 1 if "window" is first array element else 0
+    */
+    function getStartIndex(nsSplit) {
+        
+		return (nsSplit[0] === "window") ? 1 : 0;
+        
 	}
+    
+    /*
+        @desc Create's a Namespace object
+        @param string - eg: "my.namespace.abc"
+        @return object - empty object
+    */
+    function create(ns) {
+        
+        return (typeof ns === "string") ? (function () {
+            
+            var nsSplit = ns.split("."),
+                nsIndex = getStartIndex(nsSplit),
+                winTemp = win,
+                nsName;
 
-	// Create a NamseSpaced module
-	NameSpace.CreateModule = function(nameSpace, newValue) {
-		return (nameSpace === undefined || newValue === undefined) ? false : createModule(nameSpace, newValue);
-	}
+            for (nsIndex; nsIndex < nsSplit.length; nsIndex += 1) {
+                nsName = nsSplit[nsIndex];
+                winTemp[nsName] = winTemp[nsName] || {};
+                winTemp = winTemp[nsName];
+            }
+            
+            return winTemp;
+            
+        }()) : false;
+    }
+    
+    /*
+        @desc Create's a Namespace module
+        @param string - eg: "my.namespace.abc"
+        @param asignee - eg: function, string, array, number, boolean, object
+        @return object - with value
+    */
+    function createNameSpaceModule(ns, asignee) {
+        
+        return (typeof ns === "string")  ? (function (ns) {
+            
+			var nsSplit = ns.split("."),
+				lastIndex = nsSplit.length - 1,
+				nsName = nsSplit[lastIndex],
+                nsModule;
+            
+            nsSplit.splice(lastIndex, 1);
+            nsSplit = nsSplit.join(".");
+            nsModule = create(nsSplit);
+            nsModule[nsName] = (typeof asignee !== un) ? asignee : null;
+            
+            return true;
+            
+		}(ns)) : false;
+    }
+    
+    /*
+        @desc Verify if a Namespace exist
+        @param string - eg: "my.namespace.abc"
+        @return boolean
+    */
+    function verifyNameSpace(ns) {
+        
+        return (typeof ns === "string")  ? (function (ns) {
+            
+			var nsSplit = ns.split("."),
+				nsIndex = getStartIndex(nsSplit),
+				winTemp = win,
+                temp;
+            
+            for (nsIndex; nsIndex < nsSplit.length; nsIndex += 1) {
+                
+                temp = winTemp[nsSplit[nsIndex]];
+                
+                if (temp !== un) {
+                    winTemp = temp;
+                } else {
+                    nsIndex = nsSplit.length;
+                    return false;
+                }
+                
+            }
+            
+            return true;
+            
+		}(ns)) : false;
+    }
+    
+    
+    /*
+        @desc Create's a Namespace object
+        @param string or array - eg: "my.namespace.abc" or ["my.namespace.abc","my.namespace.def",..]
+        @return object
+    */
+    NameSpace.ns = function (ns) {
+        
+        return (typeof ns === "string") ? (function (ns) {
+            
+            var nsName = 0;
+            
+            if (ns instanceof Array) {
+                
+                for (nsName; nsName < ns.length; nsName += 1) {
+                    create(ns[nsName]);
+                }
+                
+                return true;
+                
+            } else if (typeof ns === "string") {
+                
+                return (typeof create(ns) === "object");
+                
+            }
+            
+        }(ns)) : false;
+    };
+    
+    /*
+        @desc Create's a Namespace module with asignee
+        @param string eg: "my.namespace.abc"
+        @param2 Any datatype
+        @return object
+    */
+	NameSpace.nsModule = function (ns, asignee) {
+		return (ns === un) ? false : createNameSpaceModule(ns, asignee);
+	};
 
-	// Verify NamseSpace
-	NameSpace.Verify = function(nameSpace) {
-		return (nameSpace === undefined) ? false : verify(nameSpace);
-	}
-
-	function create(nameSpace){
-		return (typeof nameSpace === "string") ? (function(){
-				var objectsList = nameSpace.split("."),
-					startWith = getStartIndex(objectsList),
-					current = daddy;
-			        for (var i = startWith; i < objectsList.length; i++) {
-						var objectName = objectsList[i];
-			            current[objectName] = current[objectName] || {};
-			            current = current[objectName];
-			        }
-			        return current;
-			}()) : false;
-	}
-
-	function createModule(nameSpace, newValue){
-		return (typeof nameSpace === "string")  ? (function(){
-			var objectsList = nameSpace.split('.'),
-				lastIndex = objectsList.length-1,
-				objectName = objectsList[lastIndex];
-				objectsList.splice(lastIndex, 1);
-				objectsList = objectsList.join('.');
-				finalObject = create(objectsList);
-				finalObject[objectName] = newValue;
-		}()) : false;
-	}
-
-	function verify(nameSpace){
-		return (typeof nameSpace === "string")  ? (function(){
-			var objectsList = nameSpace.split("."),
-				startWith = getStartIndex(objectsList),
-				current = daddy, prop;
-				for (var i = startWith; i < objectsList.length; i++) {
-					prop = current[objectsList[i]];
-			        if(prop === undefined) {
-			        	return false;
-			        	break;
-			        }
-			        current = prop;
-			    }
-			    return true;
-		}()) : false;
-	}
-
-	function getStartIndex(objectsList){
-		return (objectsList[0] === "window") ? 1 : 0;
-	}
-
-	//publish
-	daddy.Simbly = NameSpace;
+	/*
+        @desc Verify if a Namespace exist
+        @param string - eg: "my.namespace.abc"
+        @return boolean
+    */
+	NameSpace.nsExist = function (ns) {
+		return (ns === un) ? false : verifyNameSpace(ns);
+	};
+    
+    /*
+        @desc Assign NameSpace object to global window object
+    */
+    win.Simbly = Object.create(NameSpace);
 
 }(window));
-
